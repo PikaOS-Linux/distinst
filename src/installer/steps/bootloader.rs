@@ -91,44 +91,12 @@ pub fn bootloader<F: FnMut(i32)>(
                                     "--path=/boot/efi",
                                     // Do not set EFI variables
                                     "--no-variables",
-                                ][..],
-                            )
-                            .run()?;
-                    } else {
-                        chroot
-                            .command(
-                                "/usr/bin/env",
-                                &[
-                                    "bash",
-                                    "-c",
-                                    "echo GRUB_ENABLE_CRYPTODISK=y >> /etc/default/grub",
-                                ],
-                            )
-                            .run()?;
-
-                        chroot
-                            .command(
-                                "grub-install",
-                                &[
-                                    "--target=x86_64-efi",
-                                    "--efi-directory=/boot/efi",
-                                    &format!("--boot-directory=/boot/efi/EFI/{}", name),
-                                    &format!("--bootloader={}", name),
-                                    "--no-nvram",
-                                    "--recheck",
-                                ],
-                            )
-                            .run()?;
-
-                        chroot
-                            .command(
-                                "grub-mkconfig",
-                                &["-o", &format!("/boot/efi/EFI/{}/grub/grub.cfg", name)],
-                            )
-                            .run()?;
-                    }
+                             ],
+                        )
+                        .run()?;
 
                     chroot.command("update-initramfs", &["-c", "-k", "all"]).run()?;
+                }
 
                     if config.flags & MODIFY_BOOT_ORDER != 0 {
                         let efi_part_num = efi_part_num.to_string();
