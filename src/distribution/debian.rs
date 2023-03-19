@@ -99,8 +99,6 @@ pub fn get_bootloader_packages(os_release: &OsRelease) -> &'static [&'static str
         Bootloader::Efi => &["update-systemd-boot"],
     }
 }
-    }
-}
 
 pub fn get_required_packages<D: InstallerDiskOps>(
     disks: &D,
