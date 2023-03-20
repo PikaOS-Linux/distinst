@@ -66,36 +66,6 @@ impl<'a> ChrootConfigurator<'a> {
             .run()?;
         self.chroot.command("apt-get", &["autoremove", "-y", "--purge"]).run()
     }
-
-    /// Configure the bootloader on the system.
-    pub fn bootloader(&self) -> io::Result<()> {
-        info!("configuring bootloader");
-        let result = self
-            .chroot
-            .command(
-                "kernelstub",
-                &[
-                    "--esp-path",
-                    "/boot/efi",
-                    "--add-options",
-                    BOOT_OPTIONS,
-                    "--loader",
-                    "--manage-only",
-                    "--force-update",
-                    "--verbose",
-                ],
-            )
-            .run();
-
-        match result {
-            Ok(()) => Ok(()),
-            // If kernelstub was not found, use grub instead.
-            Err(ref e) if e.kind() == io::ErrorKind::NotFound => {
-                let args: &[&str] = &[];
-                self.chroot.command("update-grub", args).run()
-            }
-            Err(why) => Err(why),
-        }
     }
 
     /// Add the apt repository on the image, so that packages may be installed from it.
