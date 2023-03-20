@@ -87,7 +87,6 @@ pub fn bootloader<F: FnMut(i32)>(
             drop(efivars_mount);
             chroot.unmount(false)?;
         }
-    }
 
     callback(99);
 
