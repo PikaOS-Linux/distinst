@@ -35,27 +35,6 @@ pub fn bootloader<F: FnMut(i32)>(
     info!("{}: installing bootloader for {:?}", bootloader_dev.display(), bootloader);
 
     {
-        let efi_path = {
-            let chroot = mount_dir.as_os_str().as_bytes();
-            let mut target_mount: Vec<u8> = if chroot[chroot.len() - 1] == b'/' {
-                chroot.to_owned()
-            } else {
-                let mut temp = chroot.to_owned();
-                temp.push(b'/');
-                temp
-            };
-
-            target_mount.extend_from_slice(b"boot/efi/");
-            PathBuf::from(OsString::from_vec(target_mount))
-        };
-
-        // Also ensure that the /boot/efi directory is created.
-        if bootloader == Bootloader::Efi && boot_opt.is_some() {
-            fs::create_dir_all(&efi_path)
-                .with_context(|err| format!("failed to create efi directory: {}", err))?;
-        }
-
-        {
             let mut chroot = Chroot::new(mount_dir)?;
             let efivars_mount = mount_efivars(&mount_dir)?;
 
@@ -97,30 +76,6 @@ pub fn bootloader<F: FnMut(i32)>(
 
                     chroot.command("update-initramfs", &["-c", "-k", "all"]).run()?;
                 }
-
-                    if config.flags & MODIFY_BOOT_ORDER != 0 {
-                        let efi_part_num = efi_part_num.to_string();
-                        let loader = if &name == "Pop!_OS" {
-                            "\\EFI\\systemd\\systemd-bootx64.efi".into()
-                        } else {
-                            format!("\\EFI\\{}\\shimx64.efi", name)
-                        };
-
-                        let args: &[&OsStr] = &[
-                            "--create".as_ref(),
-                            "--disk".as_ref(),
-                            bootloader_dev.as_ref(),
-                            "--part".as_ref(),
-                            efi_part_num.as_ref(),
-                            "--write-signature".as_ref(),
-                            "--label".as_ref(),
-                            iso_os_release.pretty_name.as_ref(),
-                            "--loader".as_ref(),
-                            loader.as_ref(),
-                        ][..];
-
-                        chroot.command("efibootmgr", args).run()?;
-                    }
                 }
             }
 
